@@ -1,0 +1,100 @@
+*/
+#define BUFZSIZE 800
+#define DEBUGPIN 13 // Connect a resistor + LED to this pin to see debug activity
+
+char buffer[BUFZSIZE];
+int c;
+boolean tpl;
+int command;
+boolean done;
+void setup()  
+{
+  pinMode(DEBUGPIN, OUTPUT);
+  digitalWrite(DEBUGPIN, LOW);
+  
+  Serial.begin(115200);
+  int i;
+  for (int i = 0; i < BUFZSIZE; i++) buffer[i] = 0;
+  tpl = false;
+  done = false;
+  command = 0;
+}
+
+void loop() // run over and over
+{
+  start:
+  if (!done && Serial.available() > 0){
+    char ch = Serial.read();
+    if (ch == '#') goto start;
+    buffer[c] = ch;
+    if (!tpl && c >= 6 &&
+        buffer[c] == 's' && 
+        buffer[c-1] == 'd' && 
+        buffer[c-2] == 'n' && 
+        buffer[c-3] == 'o' && 
+        buffer[c-4] == 'c' && 
+        buffer[c-5] == 'e' && 
+        buffer[c-6] == 's'){
+        digitalWrite(DEBUGPIN, HIGH);
+        delay(400);
+        Serial.print("tpl\n");
+        digitalWrite(DEBUGPIN, LOW);
+        tpl = true;
+        c = 0;
+     }else if (tpl){
+        if (c >= 6 &&
+            buffer[c] == '>' && 
+            buffer[c-1] == 't' && 
+            buffer[c-2] == 'e' && 
+            buffer[c-3] == 'n' && 
+            buffer[c-4] == 'r' && 
+            buffer[c-5] == 'o' &&
+            buffer[c-6] == 'h'){
+              digitalWrite(DEBUGPIN, HIGH);
+              delay(8000); 
+              if (command == 0){
+                Serial.print("setenv ipaddr 192.168.1.101\n");
+              }else if (command == 1){
+                Serial.print("setenv serverip 192.168.1.100\n");  
+              }else if (command == 2){
+                Serial.print("tftpboot 0x81000000 openwrt.bin\n");
+              }else if (command == 3){
+                Serial.print("erase 0x9f020000 +0x3c0000\n");     
+              }else if (command == 4){
+                Serial.print("cp.b 0x81000000 0x9f020000 0x3c0000\n");
+              }else if (command == 5){
+                
+                //Serial.print("boot.m 9f020000\n");
+                //Serial.print("reset\n");
+                
+                done = true;
+                int j;
+                for (j = 0; j < 10; j++){
+                  digitalWrite(DEBUGPIN, LOW);
+                  delay(500);
+                  digitalWrite(DEBUGPIN, HIGH);
+                  delay(500);
+                }
+  
+                digitalWrite(DEBUGPIN, LOW);
+
+/* Uncomment to print out buffer at the end (useful for debugging)                
+                for (j = 0; j < BUFZSIZE; j++){
+                   Serial.print(buffer[j]);
+                }
+*/
+                // Stop
+                while(true){
+                   delay(100);
+                }
+            } 
+            
+            command++;
+        }
+            
+     }
+     
+     if (c++ > BUFZSIZE) c = 0;
+  } 
+}
+

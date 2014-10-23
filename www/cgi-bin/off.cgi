@@ -2,7 +2,7 @@
 
 #Send out the serial command in Hex code
 
- echo -e "\x9B\x11\x08\x21\xC6\x0D" > /dev/ttyS0					
+ echo -e "\x9B\x11\x00\x32\xCD\x0D" > /dev/ttyS0					
 
 
 #Redirect the browser back to the index page
